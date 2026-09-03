@@ -47,6 +47,7 @@ td{padding:9px 12px;border-top:1px solid rgba(80,87,89,.1);white-space:nowrap}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 .total td{font-weight:850;background:#f0f8f6}
 .notice{padding:12px 14px;margin-bottom:14px;border:1px solid rgba(182,77,85,.3);border-radius:12px;background:#fff0f1;color:#8f343c}
+.period-note{padding:11px 14px;margin-bottom:14px;border:1px solid rgba(177,120,36,.32);border-radius:12px;background:#fff8e8;color:#7d581c;font-weight:650}
 .hidden{display:none}
 .warehouse-heading{margin-top:23px}
 footer{text-align:center;color:#7b8486;font-size:.73rem;margin-top:16px}
