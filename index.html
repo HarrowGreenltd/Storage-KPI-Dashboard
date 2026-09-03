@@ -5,43 +5,47 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Harrow Green Storage KPI Dashboard">
   <title>Storage KPI Dashboard</title>
-  <link rel="stylesheet" href="styles.css?v=1">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="mark">HG</span><div><h1>Storage KPIs</h1><p>Financial and warehouse performance</p></div></div>
-    <div class="updated" id="updated">Loading data…</div>
-  </header>
+  <main class="shell">
+    <header class="top">
+      <div class="brand"><span class="mark">HG</span><div><h1>Storage KPI Dashboard</h1><p>Storage financial performance, capacity and utilisation</p></div></div>
+      <div class="actions"><span class="status ready"><i></i><span id="updated">Loading data…</span></span></div>
+    </header>
 
-  <main>
-    <nav class="tabs" aria-label="Dashboard sections">
+    <section class="panel controls" aria-label="Dashboard filters">
+      <div class="field"><label for="branch">Branch</label><select id="branch"></select></div>
+      <div class="field"><label for="month">Month</label><select id="month"></select></div>
+      <button id="reset" class="btn">Reset filters</button>
+      <div class="coverage"><span>Reporting scope</span><strong id="scope-label">HG ALL · 2026</strong></div>
+    </section>
+
+    <nav class="panel tabs" aria-label="Dashboard sections">
       <button class="tab active" data-tab="summary">Summary Data</button>
       <button class="tab" data-tab="containers">Container Numbers</button>
       <button class="tab" data-tab="warehouse">Warehouse Numbers</button>
       <button class="tab" data-tab="external">External Numbers</button>
     </nav>
 
-    <section class="filters" aria-label="Dashboard filters">
-      <label>Branch<select id="branch"></select></label>
-      <label>Month<select id="month"></select></label>
-      <button id="reset" class="secondary">Reset filters</button>
-    </section>
-
     <div id="error" class="notice hidden"></div>
 
     <section id="summary" class="view active">
-      <div class="section-heading"><div><span class="eyebrow">P&amp;L figures</span><h2>Storage financial performance</h2></div></div>
-      <div id="headline" class="cards"></div>
-      <article class="panel"><div class="panel-title"><h3>P&amp;L detail</h3><span id="summary-period"></span></div><div class="table-wrap"><table id="pnl-table"></table></div></article>
-      <div class="section-heading warehouse-heading"><div><span class="eyebrow">Warehouse figures</span><h2>Capacity and utilisation</h2></div></div>
-      <div id="warehouse-cards" class="cards"></div>
-      <article class="panel"><div class="panel-title"><h3>Warehouse summary</h3></div><div class="table-wrap"><table id="summary-warehouse-table"></table></div></article>
+      <div class="heading"><div><h2>Storage financial performance</h2><p>P&amp;L figures for the selected reporting scope</p></div><span class="badge">P&amp;L figures</span></div>
+      <div id="headline" class="kpis four"></div>
+      <article class="panel table-card"><div class="table-head"><h3>P&amp;L detail</h3><span id="summary-period"></span></div><div class="scroll"><table id="pnl-table"></table></div></article>
+
+      <div class="heading warehouse-heading"><div><h2>Capacity and utilisation</h2><p>Internal and external warehouse figures</p></div><span class="badge">Warehouse figures</span></div>
+      <div id="warehouse-cards" class="kpis four"></div>
+      <article class="panel table-card"><div class="table-head"><h3>Warehouse summary</h3><span>Selected reporting scope</span></div><div class="scroll"><table id="summary-warehouse-table"></table></div></article>
     </section>
 
-    <section id="containers" class="view"><div class="section-heading"><div><span class="eyebrow">Detailed data</span><h2>Container Numbers</h2></div></div><article class="panel"><div class="table-wrap"><table id="container-table"></table></div></article></section>
-    <section id="warehouse" class="view"><div class="section-heading"><div><span class="eyebrow">Internal warehouse</span><h2>Warehouse Numbers</h2></div></div><article class="panel"><div class="table-wrap"><table id="warehouse-table"></table></div></article></section>
-    <section id="external" class="view"><div class="section-heading"><div><span class="eyebrow">Third-party storage</span><h2>External Numbers</h2></div></div><article class="panel"><div class="table-wrap"><table id="external-table"></table></div></article></section>
+    <section id="containers" class="view"><div class="heading"><div><h2>Container Numbers</h2><p>Capacity, utilisation and headcount by branch and month</p></div><span class="badge">Detailed data</span></div><article class="panel table-card"><div class="scroll"><table id="container-table"></table></div></article></section>
+    <section id="warehouse" class="view"><div class="heading"><div><h2>Warehouse Numbers</h2><p>Internal warehouse measures by branch and month</p></div><span class="badge">Internal warehouse</span></div><article class="panel table-card"><div class="scroll"><table id="warehouse-table"></table></div></article></section>
+    <section id="external" class="view"><div class="heading"><div><h2>External Numbers</h2><p>Third-party storage measures by branch and month</p></div><span class="badge">External warehouse</span></div><article class="panel table-card"><div class="scroll"><table id="external-table"></table></div></article></section>
+
+    <footer>Storage KPI Dashboard · Aggregated reporting data</footer>
   </main>
-  <script src="app.js?v=1"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>
