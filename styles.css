@@ -44,6 +44,8 @@ h1{font-size:clamp(1.4rem,2vw,2rem);letter-spacing:-.035em;margin:0}
 table{width:100%;border-collapse:collapse;font-size:.79rem}
 th{position:sticky;top:0;background:#eef7f5;color:var(--text);padding:10px 12px;text-align:left;font-size:.66rem;text-transform:uppercase;letter-spacing:.07em;white-space:nowrap;z-index:2}
 td{padding:9px 12px;border-top:1px solid rgba(80,87,89,.1);white-space:nowrap}
+.month-start td{border-top:2px solid rgba(20,135,156,.28)}
+.month-start td:first-child{font-weight:850;color:var(--teal)}
 .num{text-align:right;font-variant-numeric:tabular-nums}
 .total td{font-weight:850;background:#f0f8f6}
 .notice{padding:12px 14px;margin-bottom:14px;border:1px solid rgba(182,77,85,.3);border-radius:12px;background:#fff0f1;color:#8f343c}
