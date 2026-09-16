@@ -11,7 +11,9 @@ const includedMonthIndexes=()=>{const selected=selectedMonthIndex();if(selected>
 const includedMonths=()=>new Set(includedMonthIndexes().map(i=>DATA.months[i]));
 const includesOpenCurrentMonth=()=>{const now=new Date(),cutoff=currentCutoffIndex(),lastDay=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();return reportYear()===now.getFullYear()&&now.getDate()<lastDay&&includedMonthIndexes().includes(cutoff)};
 function valuesFor(metric){const branch=$('#branch').value;const item=(DATA.pnl[branch]||DATA.pnl['HG ALL']||[]).find(x=>x.metric===metric);if(!item)return[];return includedMonthIndexes().map(i=>item.values[i])}
-function warehouseRows(source){const months=includedMonths();let rows=source.filter(r=>months.has(r.month));const b=$('#branch').value;if(b!=='HG ALL')rows=rows.filter(r=>r.branch===b);return rows}
+const normaliseBranch=b=>String(b||'').trim().toUpperCase()==='HG ALL'?'HG ALL':String(b||'').trim();
+const normaliseMetric=m=>m==='Non-Fee Earning Customers'?'Non-Fee Earning':m==='HG Staff'?'HG Internal':m;
+function warehouseRows(source){const months=includedMonths();let rows=source.filter(r=>months.has(r.month));const b=$('#branch').value;if(b==='HG ALL')rows=rows.filter(r=>normaliseBranch(r.branch)!=='HG ALL');else rows=rows.filter(r=>normaliseBranch(r.branch)===b);return rows.map(r=>({...r,branch:normaliseBranch(r.branch),metric:normaliseMetric(r.metric)}))}
 function agg(source){const out={};warehouseRows(source).forEach(r=>{out[r.metric]=(out[r.metric]||0)+r.value});return out}
 function card(label,value,sub=''){return `<article class="panel kpi"><span>${label}</span><strong>${value}</strong>${sub?`<small>${sub}</small>`:''}</article>`}
 function renderSummary(){
