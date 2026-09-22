@@ -16,7 +16,7 @@ function warehouseRows(source){
  return rows.map(r=>({...r,branch:normaliseBranch(r.branch),metric:normaliseMetric(r.metric)}));
 }
 function agg(source){const out={};warehouseRows(source).forEach(r=>{out[r.metric]=(out[r.metric]||0)+r.value});return out}
-function card(label,value,sub=''){return `<article class="card"><div class="label">${label}</div><div class="number-bubble"><div class="value">${value}</div></div>${sub?`<div class="sub">${sub}</div>`:''}</article>`}
+function card(label,value,sub=''){return `<article class="card"><div class="label">${label}</div><div class="value">${value}</div>${sub?`<div class="sub">${sub}</div>`:''}</article>`}
 function renderSummary(){
  const revenue=sum(valuesFor('Total Storage Revenue')), costs=sum(valuesFor('Total Property Costs')), external=sum(valuesFor('3rd Party Warehousing - Direct')), gp=sum(valuesFor('Gross Storage Profit')), margin=revenue?gp/revenue:0;
  $('#headline').innerHTML=card('Storage revenue',money(revenue))+card('Total property costs',money(costs))+card('Gross storage profit',money(gp))+card('Gross margin',pct(margin));
