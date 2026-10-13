@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="description" content="Harrow Green Storage KPI Dashboard">
   <title>Storage KPI Dashboard</title>
-  <link rel="stylesheet" href="styles.css?v=2">
+  <link rel="stylesheet" href="styles.css?v=3">
 </head>
 <body>
   <main class="shell">
@@ -28,6 +28,7 @@
       <button class="tab" data-tab="warehouse">Warehouse Numbers</button>
       <button class="tab" data-tab="external">External Numbers</button>
       <button class="tab" data-tab="customers">Customer Numbers Breakdown</button>
+      <button class="tab" data-tab="invoice-dashboard">Invoice Dashboard</button>
     </nav>
 
     <div id="error" class="notice hidden"></div>
@@ -48,6 +49,21 @@
     <section id="external" class="view"><div class="heading"><div><h2>External Numbers</h2><p>External warehouse measures grouped by month, measure and branch</p></div><span class="badge">External data</span></div><article class="panel table-card"><div class="scroll"><table id="external-table"></table></div></article></section>
     <section id="customers" class="view"><div class="heading"><div><h2>Customer Numbers Breakdown</h2><p>Customer controls by branch and reporting period</p></div><span class="badge">Customer measures</span></div><article class="panel table-card"><div class="table-head"><h3>Customer measures</h3><span>HG ALL shows each branch and a total</span></div><div class="scroll"><table id="customer-table"></table></div></article></section>
 
+    <section id="invoice-dashboard" class="view">
+      <div class="heading"><div><h2>Invoice Dashboard</h2><p>Customer storage invoice position, grouped by customer and Storage ID</p></div><span class="badge">Latest invoice snapshot</span></div>
+      <div id="invoice-kpis" class="kpis four"></div>
+      <div class="invoice-grid">
+        <article class="panel invoice-chart-card">
+          <div class="table-head"><h3>Customers by days since last invoice</h3><span>Uses the oldest Storage ID per customer</span></div>
+          <div id="invoice-aging-chart" class="invoice-chart-wrap"></div>
+        </article>
+        <article class="panel invoice-list-card">
+          <div class="table-head"><h3>Customer breakdown</h3><span>Expand a customer to view individual Storage IDs</span></div>
+          <div id="invoice-customer-list" class="invoice-customer-list"></div>
+        </article>
+      </div>
+    </section>
+
     <section id="value-analysis" class="view">
       <div class="heading"><div><h2>Warehouse Value Analysis</h2><p>Value per container for the selected reporting scope</p></div><span class="badge">Value analysis</span></div>
       <div class="heading"><div><h2>Warehouse</h2></div></div><div id="warehouse-value-cards" class="kpis four"></div>
@@ -59,6 +75,6 @@
 
     <footer>Storage KPI Dashboard · Aggregated reporting data</footer>
   </main>
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>
