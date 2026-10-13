@@ -56,6 +56,61 @@ function renderCustomers(){
  }
  const selected=selectedMonthIndex();const months=selected>=0?[DATA.months[selected]]:includedMonthIndexes().map(i=>DATA.months[i]);const branch=$('#branch').value;const branches=branch==='HG ALL'?DATA.branches.filter(b=>b!=='HG ALL'):[branch];const metrics=['Customers on Hold','Customers Not Invoiced for Month','Average Storage Retention Length'];const labels=['Customers on hold','Not invoiced for month','Average retention length'];const rows=[];months.forEach(month=>{const i=DATA.months.indexOf(month);branches.forEach(b=>rows.push({month,branch:b,index:i,values:metrics.map(metric=>metricValue(b,metric,i))}));if(branch==='HG ALL'){const values=metrics.map(metric=>{const values=branches.map(b=>metricValue(b,metric,i)).filter(v=>v!==null);if(!values.length)return null;return metric==='Average Storage Retention Length'?sum(values)/values.length:sum(values)});rows.push({month,branch:'Total',index:i,values,total:true});}});const previous=(row,metric)=>row.index>0?(row.total?(()=>{const values=branches.map(b=>metricValue(b,metric,row.index-1)).filter(v=>v!==null);return values.length?(metric==='Average Storage Retention Length'?sum(values)/values.length:sum(values)):null})():metricValue(row.branch,metric,row.index-1)):null;$('#customer-table').innerHTML='<thead><tr><th>Month</th><th>Branch</th>'+labels.map(label=>`<th class="num">${label}</th>`).join('')+'</tr></thead><tbody>'+rows.map(row=>`<tr class="${row.total?'total':''}"><td>${row.month}</td><td>${row.branch}</td>${row.values.map((value,i)=>`<td class="num">${valueWithTrend(value,previous(row,metrics[i]),num)}</td>`).join('')}</tr>`).join('')+'</tbody>'
 }
+async function loadInvoiceDashboardData(){
+ if(Array.isArray(DATA.invoiceDashboard)&&DATA.invoiceDashboard.length)return;
+ try{
+  const parts=await Promise.all([1,2,3,4].map(i=>fetch(`data/invoice-part-${i}.txt`,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Invoice data part could not be loaded.');return r.text()})));
+  const binary=atob(parts.join('').trim()),bytes=Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+  const stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+  DATA.invoiceDashboard=JSON.parse(await new Response(stream).text());
+ }catch(e){DATA.invoiceDashboard=[];console.warn('Invoice Dashboard data unavailable',e)}
+}
+function esc(value){return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))}
+function invoiceRows(){
+ let rows=Array.isArray(DATA.invoiceDashboard)?DATA.invoiceDashboard:[];
+ const branch=$('#branch').value;
+ if(branch!=='HG ALL')rows=rows.filter(r=>normaliseBranch(r.branch)===branch);
+ return rows;
+}
+function invoiceGroups(){
+ const customers=new Map();
+ invoiceRows().forEach(row=>{
+  const customer=String(row.customer||'').trim()||'Unknown customer',customerKey=customer.toLowerCase();
+  if(!customers.has(customerKey))customers.set(customerKey,{customer,ids:new Map()});
+  const group=customers.get(customerKey),storageId=String(row.storageId||'').trim()||'No Storage ID',idKey=storageId.toLowerCase();
+  if(!group.ids.has(idKey))group.ids.set(idKey,{storageId,sellAmount:0,daysSinceLastInvoice:null,branches:new Set(),statuses:new Set(),caseAreas:new Set()});
+  const id=group.ids.get(idKey);id.sellAmount+=Number(row.sellAmount)||0;
+  const age=row.daysSinceLastInvoice===null||row.daysSinceLastInvoice===undefined?null:Number(row.daysSinceLastInvoice);
+  if(age!==null&&isFinite(age))id.daysSinceLastInvoice=id.daysSinceLastInvoice===null?age:Math.min(id.daysSinceLastInvoice,age);
+  if(String(row.branch||'').trim())id.branches.add(String(row.branch).trim());
+  if(String(row.status||'').trim())id.statuses.add(String(row.status).trim());
+  if(String(row.caseArea||'').trim())id.caseAreas.add(String(row.caseArea).trim());
+ });
+ return [...customers.values()].map(group=>{
+  const ids=[...group.ids.values()].map(id=>({...id,branch:[...id.branches].join(', '),status:[...id.statuses].join(', '),caseArea:[...id.caseAreas].join(', ')})).sort((a,b)=>(b.daysSinceLastInvoice??-1)-(a.daysSinceLastInvoice??-1)||a.storageId.localeCompare(b.storageId));
+  const statuses=[...new Set(ids.flatMap(id=>id.status.split(', ').filter(Boolean)))],dated=ids.map(id=>id.daysSinceLastInvoice).filter(v=>v!==null);
+  return{customer:group.customer,ids,totalSell:sum(ids.map(id=>id.sellAmount)),uniqueIds:ids.length,status:statuses.length===1?statuses[0]:statuses.length>1?'Mixed':'—',customerDays:dated.length?Math.min(...dated):null};
+ }).sort((a,b)=>(b.customerDays??-1)-(a.customerDays??-1)||b.totalSell-a.totalSell||a.customer.localeCompare(b.customer));
+}
+function invoiceBucket(days){return days===null?'No date':days<0?'Future date':days<=30?'0-30':days<=60?'31-60':days<=90?'61-90':'91+'}
+function renderInvoiceDashboard(){
+ const target=$('#invoice-customer-list'),chart=$('#invoice-aging-chart'),kpis=$('#invoice-kpis');if(!target||!chart||!kpis)return;
+ const groups=invoiceGroups();
+ if(!groups.length){
+  kpis.innerHTML=card('Total sell amount',0,'Latest invoice snapshot',null,money2)+card('Customers',0,'',null,num)+card('Unique Storage IDs',0,'',null,num)+card('91+ day customers',0,'',null,num);
+  chart.innerHTML='<div class="invoice-empty">Invoice Dashboard data has not yet been published from Excel.</div>';
+  target.innerHTML='<div class="invoice-empty">No invoice rows are available for the selected branch.</div>';return;
+ }
+ const totalSell=sum(groups.map(g=>g.totalSell)),uniqueIds=sum(groups.map(g=>g.uniqueIds)),over91=groups.filter(g=>g.customerDays!==null&&g.customerDays>90).length;
+ kpis.innerHTML=card('Total sell amount',totalSell,'Latest invoice snapshot',null,money2)+card('Customers',groups.length,'',null,num)+card('Unique Storage IDs',uniqueIds,'',null,num)+card('91+ day customers',over91,'',null,num);
+ const labels=['0-30','31-60','61-90','91+','Future date'],counts=Object.fromEntries(labels.map(label=>[label,0])),noDate=groups.filter(g=>g.customerDays===null).length;
+ groups.forEach(g=>{const bucket=invoiceBucket(g.customerDays);if(bucket!=='No date')counts[bucket]++});
+ const total=Math.max(1,groups.length-noDate),angles=[];let running=0;
+ labels.forEach((label,i)=>{const share=counts[label]/total*100,start=running;running+=share;angles.push({label,count:counts[label],share,start,end:running,i})});
+ const colours=['var(--mint)','var(--teal)','var(--amber)','var(--red)','var(--muted)'],gradient=angles.map(a=>`${colours[a.i]} ${a.start}% ${a.end}%`).join(',');
+ chart.innerHTML=`<div class="invoice-pie" style="background:conic-gradient(${gradient})" aria-label="Invoice age breakdown"></div><div class="invoice-legend">${angles.map(a=>`<div class="invoice-legend-row"><i style="background:${colours[a.i]}"></i><span>${a.label}${a.label==='Future date'?'':' days'}</span><strong>${num(a.count)} · ${(a.share||0).toFixed(1)}%</strong></div>`).join('')}${noDate?`<div class="invoice-legend-row"><i style="background:var(--muted)"></i><span>No invoice date</span><strong>${num(noDate)}</strong></div>`:''}</div>`;
+ target.innerHTML=groups.map(g=>`<details class="invoice-customer"><summary><div class="invoice-customer-name"><span class="invoice-summary-label">Customer</span><span class="invoice-summary-value">${esc(g.customer)}</span></div><div><span class="invoice-summary-label">Sell amount</span><span class="invoice-summary-value">${money2(g.totalSell)}</span></div><div><span class="invoice-summary-label">Unique Storage IDs</span><span class="invoice-summary-value">${num(g.uniqueIds)}</span></div><div><span class="invoice-summary-label">Status</span><span class="invoice-status" title="${esc(g.status)}">${esc(g.status)}</span></div><span class="invoice-chevron">⌄</span></summary><div class="invoice-detail"><table><thead><tr><th>Storage ID</th><th class="num">Sell amount</th><th class="num">Days since last invoice</th><th>Branch</th><th>Status</th><th>Case / Area</th></tr></thead><tbody>${g.ids.map(id=>`<tr><td>${esc(id.storageId)}</td><td class="num">${money2(id.sellAmount)}</td><td class="num">${id.daysSinceLastInvoice===null?'—':num(id.daysSinceLastInvoice)}</td><td>${esc(id.branch||'—')}</td><td>${esc(id.status||'—')}</td><td>${esc(id.caseArea||'—')}</td></tr>`).join('')}</tbody></table></div></details>`).join('');
+}
 function valueCards(values,prior={}){const marginPercent=values.revenue?values.margin/values.revenue:0;const priorMarginPercent=prior.revenue?prior.margin/prior.revenue:null;return card('Revenue per container',values.revenue,'',prior.revenue,money)+card('Cost per container',values.cost,'',prior.cost,money)+card('Margin per container',values.margin,'',prior.margin,money)+card('Margin % of revenue',marginPercent,'',priorMarginPercent,pct)}
 function sourceMeasure(source,branch,metric,index){return sum((source||[]).filter(row=>row.metric===metric&&row.month===DATA.months[index]&&(branch==='HG ALL'?normaliseBranch(row.branch)!=='HG ALL':normaliseBranch(row.branch)===branch)).map(row=>row.value))}
 function pnlMeasure(branch,metric,index){return Number((DATA.pnl?.[branch]||[]).find(row=>row.metric===metric)?.values?.[index])||0}
