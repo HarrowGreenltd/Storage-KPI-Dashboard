@@ -59,7 +59,7 @@ function renderCustomers(){
 async function loadSeptemberPatch(){
  try{
   const r=await fetch('storage-september-2026.json',{cache:'no-store'});if(!r.ok)return;
-  const p=await r.json(),idx=DATA.months.indexOf(p.month);if(idx<0)return;
+  const p=await r.json(),idx=DATA.months.indexOf(p.month);if(idx<0)return;if(DATA.generatedAt&&p.generatedAt&&new Date(DATA.generatedAt)>=new Date(p.generatedAt))return;
   DATA.generatedAt=p.generatedAt||DATA.generatedAt;DATA.forecastName=p.forecastName||DATA.forecastName;
   Object.entries(p.pnl||{}).forEach(([branch,metrics])=>{const series=DATA.pnl?.[branch]||[];Object.entries(metrics).forEach(([metric,value])=>{let row=series.find(x=>x.metric===metric);if(!row){row={metric,values:Array(DATA.months.length).fill(0)};series.push(row)}row.values[idx]=Number(value)||0});DATA.pnl[branch]=series});
   DATA.containers=(DATA.containers||[]).filter(x=>x.month!==p.month).concat((p.containers||[]).filter(x=>x.branch!=='Container Storage Locations'));
@@ -70,6 +70,7 @@ async function loadSeptemberPatch(){
  }catch(e){console.warn('September workbook patch unavailable',e)}
 }
 async function loadInvoiceDashboardData(){
+ if(Array.isArray(DATA.invoiceDashboard)&&DATA.invoiceDashboard.length)return;
  try{
   const parts=await Promise.all(Array.from({length:9},(_,i)=>i+1).map(i=>fetch(`invoice-dashboard-${i}.json`,{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Invoice data part could not be loaded.');return r.json()})));
   DATA.invoiceDashboard=parts.flat().map(r=>({customer:r[0],storageId:r[1],branch:r[2],status:r[3],caseArea:r[4],daysSinceLastInvoice:r[5],sellAmount:r[6]}));
